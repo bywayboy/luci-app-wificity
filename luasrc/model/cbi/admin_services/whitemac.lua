@@ -4,12 +4,12 @@ local _ = luci.i18n.translate
 local m
 
 
-m = Map("wificity", "MAC white list manage.",
+m = Map("wificity", _("MAC white list manage."),
 		_("This page allows you to set MAC address white list."))	
 
 -- after save callback 
 	m.on_after_commit = function(self)
-		--luci.sys.call("/etc/init.d/yifi restart >/dev/null") 
+		--luci.sys.call("/etc/init.d/wificity restart >/dev/null") 
 	end
 	
 s = m:section(TypedSection, "whitemac", translate("White List MAC address"))

@@ -12,7 +12,7 @@ function index()
 	if nixio.fs.access("/etc/config/wificity") then
 		entry({"admin", "services", "wificity_status"}, call("action_wificity_status"))
 		entry({"admin", "services", "wificity"}, cbi("admin_services/wificity"), _("Wificity Settings")).dependent = true
-		entry({"admin", "system", "whitemac"}, cbi("admin_services/whitemac"),_("White MAC"))
+		entry({"admin", "services", "whitemac"}, cbi("admin_services/whitemac"),_("White MAC"))
 	end
 	if nixio.fs.access("/etc/config/ap") then
 		entry({"admin", "services", "apmanage"}, cbi("admin_services/apmanage"), _("AP Manager")).dependent = true
