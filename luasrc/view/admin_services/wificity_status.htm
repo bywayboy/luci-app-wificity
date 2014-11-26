@@ -1,0 +1,75 @@
+<%+cbi/valueheader%>
+
+<style type="text/css">
+.ux-tip-list, .ux-tip-list li{margin:0px; pading:0px; list-style:none;}
+.ux-tip-list li{padding: 3px 0px 3px 0px;}
+.ux-tip-label{color:#000; width:160px;float:left;display:block;}
+</style>
+<ul class="ux-tip-list">
+<li><label class="ux-tip-label"><%:Connection Status%>:</label><div id="<%=self.option%>-conn-status"><%:Collecting data...%></div></li>
+<li><label class="ux-tip-label"><%:Login Status%>:</label><div id="<%=self.option%>-login-status"><%:Collecting data...%></div></li>
+<li><label class="ux-tip-label"><%:Cafe Code%>:</label><div id="<%=self.option%>-cafe-id"><%:Collecting data...%></div></li>
+<li><label class="ux-tip-label"><%:Merchant Name%>:</label><div id="<%=self.option%>-cafe-name"><%:Collecting data...%></div></li>
+<li><label class="ux-tip-label"><%:Group Name%>:</label><div id="<%=self.option%>-group-name"><%:Collecting data...%></div></li>
+<li><input value="<%:Restart Wificity%>" type="button" class="cbi-button cbi-input-reload"  onclick="return restart_midserver(this)" /></li>
+</ul>
+<script type="text/javascript">//<![CDATA[
+var conn_stat=["<%:Not Connected%>.","<%:Connecting%>...","<%:Online%>."];
+var login_stat=["<%:Not logged%>.","<%:Online%>.","<%:Online%>.","<%:Next Server%>","<%:Data format error%>.", "<%:Sql query error%>.","<%:Device Not Bind%>.","<%:Unknown error%>."];
+
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "wificity_status")%>', null,
+	function(x, rv)
+	{
+		var cs = document.getElementById('<%=self.option%>-conn-status');
+		var ls=document.getElementById('<%=self.option%>-login-status');
+		var ci=document.getElementById('<%=self.option%>-cafe-id');
+		var cn=document.getElementById('<%=self.option%>-cafe-name');
+		var gn=document.getElementById('<%=self.option%>-group-name');
+		
+
+		if(cs)
+		{
+			cs.innerHTML=conn_stat[rv.conn];
+		}
+		if(ls)
+		{
+			ls.innerHTML=login_stat[rv.login];
+		}
+		if(ci){
+			if(""==rv.cafe_id)
+				ci.innerHTML="<%:Unknown%>";
+			else
+				ci.innerHTML=rv.cafe_id;
+		}
+		if(cn){
+			if(""==rv.cafe_name)
+				cn.innerHTML="<%:Unknown%>";
+			else
+				cn.innerHTML=rv.cafe_name;
+		}
+		if(gn){
+			if(""==rv.group_name)
+				gn.innerHTML="<%:Unknown%>";
+			else
+				gn.innerHTML=rv.group_name;
+		}
+	}
+);
+	
+function restart_midserver(btn)
+{
+	
+	btn.disabled = true;
+	btn.value    = '<%:Restarting...%>';
+	XHR.get('<%=luci.dispatcher.build_url("admin", "services", "wificity_status")%>',
+	{cmd:"restart"},
+	function(x,rv){
+		btn.disabled = false;
+		btn.value = '<%:Restart Wificity%>';
+	});
+}
+//]]></script>
+
+<%+cbi/valuefooter%>
+
+

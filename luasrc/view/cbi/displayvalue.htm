@@ -1,0 +1,4 @@
+<%+cbi/valueheader%>
+<input type="hidden" id="<%=cbid%>" name=<%=cbid%> value="<%=pcdata(self:cfgvalue(section) or self.default or "")%>" />
+<span style="white-space:nowrap;line-height:200%;"><%=pcdata(self:cfgvalue(section) or self.default or "")%></span>
+<%+cbi/valuefooter%>

@@ -1,0 +1,128 @@
+#!/usr/bin/lua
+
+require("nixio.util")
+require("luci.http")
+require("luci.sys")
+
+function urlencode(str)
+   if (str) then
+      str = string.gsub (str, "\n", "\r\n")
+      str = string.gsub (str, "([^%w ])",
+         function (c) return string.format ("%%%02X", string.byte(c)) end)
+      str = string.gsub (str, " ", "+")
+   end
+   return str    
+end
+
+function getmodel()
+	local cpuinfo =nixio.fs.readfile("/proc/cpuinfo")
+	return string.match(cpuinfo,"machine%s+:%s([^\n]*)")
+end
+
+function getwirelessinfo()
+	local uci = luci.model.uci.cursor()
+	local channel = uci.get("wireless","ra0","channel")
+	local txpower = uci.get("wireless","ra0","txpower")
+	local ssid = uci:get_first("wireless","wifi-iface","ssid")
+	local maxassoc = uci.get("wireless","ra0","maxassoc")
+	return channel,txpower,ssid,maxassoc
+end
+
+
+function getipmac()
+	local info = luci.util.exec('route')
+	local gateway,bridge = string.match(info,"default%s+([^%s]+)%s+[^%s]+%s+[^%s]+%s+[^%s]+%s+[^%s]+%s+[^%s]+%s+([^%s]+)")
+	local lan = luci.util.exec("ifconfig "..bridge)
+	local mac = nixio.fs.readfile("/sys/devices/virtual/net/"..bridge.."/address")
+	
+	local ip = string.match(lan, "inet addr:(%d+.%d+.%d+.%d+)")
+
+	mac= string.upper(string.sub(string.gsub(mac,":",""), 1,-2))
+	if nil == mac or string.len(mac)~=17 then
+		mac=luci.util.exec("ifconfig")
+		mac=string.match(mac,"HWaddr (%w+:%w+:%w+:%w+:%w+:%w+)")
+		mac= string.upper(string.gsub(mac,":",""))
+	end
+
+	return ip,mac,gateway,bridge
+end
+
+function savewirelessinfo(txt)
+	local uci = luci.model.uci.cursor()
+	local power = string.match(txt,"power=(%w+)")
+	local ssid = string.match(txt,"ssid=([^\n]+)")
+	local channel = string.match(txt,"channel=(%w+)")
+	local maxassoc = tonumber(string.match(txt,"maxassoc=(%w+)"))
+	local changed = false
+	
+	if nil ~= power then
+		uci:set("wireless","ra0","txpower",power)
+		changed = true
+	end
+	if nil ~= channel then
+		uci:set("wireless","ra0","channel",channel)
+		changed = true
+	end
+	if nil ~= channel then
+		uci:set("wireless","ra0","channel",channel)
+		changed = true
+	end
+	local section = nil
+	if nil ~= ssid then
+		uci:foreach('wireless','wifi-iface',function(s)
+			section=s['.name']
+		end)
+		if nil ~= section then
+			uci:set("wireless",section,"ssid",ssid)
+			changed = true
+		end
+	end
+
+	if nil ~=maxassoc then
+		uci:set("wireless","ra0","maxassoc",maxassoc)
+		changed = true
+	elseif nil ~= uci:get("wireless","ra0","maxassoc") then
+		uci:delete("wireless","ra0","maxassoc")
+		changed = true
+	end
+	if changed then
+		uci:commit("wireless")
+		uci:save("wireless")
+		luci.util.exec("/etc/init.d/network reload 2>/dev/null")
+	end
+end
+
+
+local machine = getmodel()
+local ip,mac,gateway,bridge =getipmac()
+local channel, txpower, ssid, maxassoc = getwirelessinfo()
+
+if nil == bridge or nil == gateway or nil == channel or nil == txpower or nil == ssid  then 
+	print("error: invald platform")
+else
+	print(txpower, channel, ssid,ip,mac,gateway,maxassoc)
+	local cmd={
+		"wget -q -O - \"",
+		"http://"..gateway.."/cgi-bin/apsync",
+		"?MAC=", mac,
+		"&TXPOWER=",txpower,
+		"&CHANNEL=",channel,
+		"&SSID=",urlencode(ssid),
+		"&MODEL=",urlencode(machine),
+		"&IP=",urlencode(ip),
+	}
+	if nil ~=maxassoc then
+		cmd[1+#cmd] = '&MAXASSOC='
+		cmd[1+#cmd] = maxassoc
+	end
+	cmd[1+#cmd] = '"'
+
+	local cmdstr = table.concat(cmd)
+
+	local txt = luci.util.exec(cmdstr)
+	
+	if string.len(txt) > 0 then
+		print(txt)
+		savewirelessinfo(txt)
+	end
+end

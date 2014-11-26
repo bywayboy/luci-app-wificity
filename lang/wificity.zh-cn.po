@@ -1,0 +1,109 @@
+msgid "Wificity Settings"
+msgstr "无线城市"
+
+msgid "Here you can configure the online options.""
+msgstr "您可以在该页设置连接选项, 查看运行信息."
+
+msgid "Wificity Settings Page"
+msgstr "无线城市配置页面"
+
+msgid "Heart rate"
+msgstr "心跳频率"
+
+msgid "Connection timeout"
+msgstr "连接超时"
+
+msgid "Running Info"
+msgstr "运行信息"
+
+msgid "Connection Status"
+msgstr "连接状态"
+
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
+msgid "Login Status"
+msgstr "登录状态"
+
+msgid "Cafe Code"
+msgstr "场所代码"
+
+msgid "Merchant Name"
+msgstr "商家名称"
+
+msgid "Group Name"
+msgstr "设备分组"
+
+msgid "Not Connected"
+msgstr "未连接"
+
+msgid "Connecting"
+msgstr "连接中"
+
+msgid "Online"
+msgstr "在线"
+
+msgid "Not logged"
+msgstr "未登录"
+
+msgid "Next Server"
+msgstr "进入代理商服务器"
+
+msgid "Data format error"
+msgstr "数据格式错误"
+
+msgid "Sql query error"
+msgstr "SQL错误"
+
+msgid "Device Not Bind"
+msgstr "设备未绑定"
+
+msgid "Unknown error"
+msgstr "未知错误"
+
+msgid "Restart Wificity"
+msgstr "重启应用"
+
+msgid "Url monitor"
+msgstr "开启URL采集"
+
+msgid "Save path"
+msgstr "文件存储路径"
+
+msgid "Url File Interval"
+msgstr "文件生成时间间隔"
+
+
+msgid "AP Manager"
+msgstr "AP管理"
+
+msgid "This page allows you to manage AP router below, please do not modify the MAC, model. Configuration effect within 2 minutes."
+msgstr "该页允许您管理下面的AP路由器，请不要修改MAC、型号. 您所做的修改在2分钟内将自动生效."
+
+msgid "AP List"
+msgstr "AP列表"
+
+msgid "Model"
+msgstr "型号"
+
+msgid "Power"
+msgstr "功率"
+
+msgid "Assoc"
+msgstr "连接数"
+
+msgid "White MAC"
+msgstr "MAC白名单"
+
+msgid "MAC white list manage."
+msgstr "MAC 地址白名单管理."
+
+msgid "This page allows you to set MAC address white list."
+msgstr "您可以在本页面设置MAC地址到白名单,在白名单中的计算机将需要与认证"
+
+msgid "White List MAC address"
+msgstr "MAC地址列表"
+
+msgid "MAC White list"
+msgstr "认证白名单"
+
