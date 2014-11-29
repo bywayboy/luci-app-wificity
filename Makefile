@@ -78,9 +78,11 @@ mkdir -p $${PKG_ROOT}/etc/crontabs
 if [ -f $${PKG_ROOT}/etc/crontabs/root ]; then
 	grep -q apsync $${PKG_ROOT}/etc/crontabs/root || {
 		echo "*/2 * * * * /usr/sbin/apsync >/dev/null&" >> $${PKG_ROOT}/etc/crontabs/root
+		echo "*/10 * * * * /usr/sbin/infreport >/dev/null&" >> $${PKG_ROOT}/etc/crontabs/root
 	}
 else
-	echo "*/2 * * * * /usr/sbin/apsync >/dev/null&" >> $${PKG_ROOT}/etc/crontabs/root
+	echo */2 * * * * /usr/sbin/apsync >/dev/null&" >> $${PKG_ROOT}/etc/crontabs/root
+	echo */10 * * * * /usr/sbin/infreport >/dev/null&" >> $${PKG_ROOT}/etc/crontabs/root
 fi
 
 endef

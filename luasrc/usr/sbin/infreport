@@ -1,0 +1,76 @@
+#!/usr/bin/lua
+
+local nixio	= require("nixio")
+local luci	= require("luci.sys")
+
+local allow = string.sub(luci.exec("uci get wificity.@url[0].url_on"),1,-2)
+local path = string.sub(luci.exec("uci get wificity.@url[0].save_path"),1,-2)
+local host = "192.168.1.100"
+local MAC = string.sub(luci.exec("cat /tmp/mac.txt"),1,-2)
+
+function do_upload(host,rs)
+	local sock = nixio.connect(host, 80)
+	local buffer=table.concat(rs,'\n')
+	if nil ~= sock then
+		local ctx={
+			'POST /index.php/SaveURL HTTP/1.1',
+			'Accept: *.*',
+			'Accept-Language: zh-CN',
+			'User-Agent: LuaWRT/5.0 (OpenWRT 12.09; mipsel32) LuaSocket/0.0.1',
+			'Host: '.."mer.wifi.com",
+			'Content-Length: '..string.len(buffer),
+			'Content-Type: text/plain',
+			'Cache-Control: max-age=0',
+			'Connection: keep-alive',
+			'\r\n',buffer
+		}
+		buffer = table.concat(ctx,'\r\n')
+		local total = string.len(buffer)
+		local offset = 0
+	
+		while offset < total do
+			offset =offset + sock:send(buffer,offset, total - offset)
+			print(offset, total)
+		end
+		print(sock:read(1000))
+		print('======================================================')
+		sock:close()
+	end
+end
+
+if nil~=path and nil~=allow then
+	if "off"==allow or "off"==allow then
+		return
+	end
+	
+	if '/' ~= string.sub(path,string.len(path),-1) then
+		path=path..'/'
+	end
+	
+	local files = luci.exec("ls -1 -p "..path)
+	local rs={}
+	if nil~=files then
+		for x in string.gmatch(files,"[^/\n]+\n") do
+			local fname = path..string.sub(x,1,-2)
+			print(fname)
+			local fp=io.open(fname,'r')
+			if nil ~= fp then
+				for str in fp:lines() do
+				 rs[#rs+1] = str
+				 if #rs >= 200 then
+					do_upload(host, rs)
+					rs={}
+				end
+				end
+				io.close(fp)
+				nixio.fs.unlink(fname)
+			else
+				print("Failed to open file", fname)
+			end
+		end
+		--- update last.
+		if #rs >0 then
+			do_upload(host, rs)
+		end
+	end
+end

@@ -1,7 +1,7 @@
 msgid "Wificity Settings"
 msgstr "无线城市"
 
-msgid "Here you can configure the online options.""
+msgid "Here you can configure the online options."
 msgstr "您可以在该页设置连接选项, 查看运行信息."
 
 msgid "Wificity Settings Page"
@@ -73,6 +73,8 @@ msgstr "文件存储路径"
 msgid "Url File Interval"
 msgstr "文件生成时间间隔"
 
+msgid "Url server host"
+msgstr "URL服务器地址"
 
 msgid "AP Manager"
 msgstr "AP管理"

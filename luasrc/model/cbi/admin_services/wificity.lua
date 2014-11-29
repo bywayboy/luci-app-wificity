@@ -50,5 +50,9 @@ local m
 	o = s:option(Value, "url_interval", translate("Url File Interval"))
 	o.datatype="string"
 	o:depends("url_on", "1")
+	
+	o = s:option(Value, "url_server", translate("Url server host"))
+	o.datatype="string"
+	o:depends("url_on", "1")
 
 return m;
