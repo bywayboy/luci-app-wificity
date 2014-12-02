@@ -13,7 +13,7 @@ function do_upload(host,rs)
 	local buffer=table.concat(rs,'\n')
 	if nil ~= sock then
 		local ctx={
-			'POST /index.php/SaveURL HTTP/1.1',
+			'POST /index.php/SaveURL/index HTTP/1.1',
 			'Accept: *.*',
 			'Accept-Language: zh-CN',
 			'User-Agent: LuaWRT/5.0 (OpenWRT 12.09; mipsel32) LuaSocket/0.0.1',
@@ -28,7 +28,7 @@ function do_upload(host,rs)
 		buffer = table.concat(ctx,'\r\n')
 		local total = string.len(buffer)
 		local offset = 0
-	
+
 		while offset < total do
 			local ns = sock:send(buffer,offset, total - offset)
 			if ns <0 then
@@ -60,10 +60,11 @@ return
 			local fname = path..string.sub(x,1,-2)
 			fs[#fs+1]=fname..".up"
 			nixio.fs.move(fname, fs[#fs])
+			fs[#fs+1]=fname
 		end
 		for i,fn in ipairs(fs) do
 			
-			print(fn)
+			print("Reading fikle",fn)
 			local fp=io.open(fn, 'r')
 			if nil ~= fp then
 				for str in fp:lines() do
