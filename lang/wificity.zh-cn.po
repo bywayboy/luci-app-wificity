@@ -109,3 +109,6 @@ msgstr "MAC地址列表"
 msgid "MAC White list"
 msgstr "认证白名单"
 
+msgid "AD Settings"
+msgstr "开启广告"
+

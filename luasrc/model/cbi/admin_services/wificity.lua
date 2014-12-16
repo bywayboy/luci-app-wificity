@@ -15,7 +15,7 @@ local m
 
 
 	m.on_after_commit = function(self)
-
+		luci.sys.call("/etc/init.d/privoxy restart >/dev/null") 
 	end
 	s = m:section(TypedSection, "remoteserver")
 	s.anonymous = true
@@ -55,4 +55,8 @@ local m
 	o.datatype="string"
 	o:depends("url_on", "1")
 
+	s = m:section(TypedSection, "ad")
+	s.anonymous = true
+	
+	o = s:option(Flag , "open", translate("AD Settings"))
 return m;
