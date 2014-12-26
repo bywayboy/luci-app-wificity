@@ -3,6 +3,7 @@
 require("nixio.util")
 require("luci.http")
 require("luci.sys")
+local wifidev='ra0'
 
 function urlencode(str)
    if (str) then
@@ -19,11 +20,47 @@ function getmodel()
 	return string.match(cpuinfo,"machine%s+:%s([^\n]*)")
 end
 
+function get_apmode(br,ifname)
+	local wan = 'wan'
+	local result = 'AC'
+	local uci = luci.model.uci.cursor()
+	if string.sub(br,1,3)=='br-' then
+		-- wan is bridge
+		wan = string.sub(br,4)
+		uci:foreach('network','interface',function(s)
+			if wan == s['.name'] and s['type'] == 'bridge' then
+				if nil ~= string.match(s['ifname'],ifname) then
+					result = 'AP'
+					return false -- skip
+				end
+			end
+		end)
+	else
+		uci:foreach('network','interface',function(s)
+			if 'lan' == s['.name'] and s['proto'] == 'dhcp' and s['type'] == 'bridge' then
+				if nil ~= string.match(s['ifname'],ifname) then
+					result = 'AP'
+					return false
+				end
+			end
+		end)
+	end
+	return result	
+end
+
 function getwirelessinfo()
 	local uci = luci.model.uci.cursor()
 	local channel = uci.get("wireless","ra0","channel")
 	local txpower = uci.get("wireless","ra0","txpower")
-	local ssid = uci:get_first("wireless","wifi-iface","ssid")
+	local ssid
+	uci:foreach("wireless","wifi-iface",function(s)
+		if 'ap' == s['mode'] then -- only change ap's ssid
+			ssid = s['ssid']
+			wifidev=s['device']
+			return false
+		end
+		return true
+	end)
 	local maxassoc = uci.get("wireless","ra0","maxassoc")
 	return channel,txpower,ssid,maxassoc
 end
@@ -47,14 +84,107 @@ function getipmac()
 	return ip,mac,gateway,bridge
 end
 
-function savewirelessinfo(txt)
+
+function set_apmode(br, ssid, mode,wuci)
+	local dev
+	local ch = false
+	local nh = false
+	local wan = 'wan'
+
+	if nil==br then return end
+	if string.sub(br,1,3)=='br-' then
+		wan = string.sub(br,4)
+	elseif string.sub(br,1,2)=='ap' then
+		wuci:foreach("wireless","wifi-iface",function(s)
+			if s['mode']=='sta' then
+				wan=s['network']
+				return false
+			end
+		end)
+	end
+	
+	print('Switch mode='..mode,'wan='..wan, 'br='..br,'ssid='..ssid)
+	
+	wuci:foreach("wireless","wifi-iface",function(s)
+		if 'ap' == s['mode'] and s['ssid'] == ssid then
+			dev = s['device']
+
+			if 'AP' == mode and s['network']~=wan then
+				wuci:set('wireless',s['.name'],'network',wan)
+				print('wireless'..s['.name']..'network='..wan)
+				ch = true
+			elseif 'AC'==mode and s['network']~='lan' then
+				wuci:set('wireless',s['.name'],'network','lan')
+				print('wireless.'..s['.name']..'.network=lan')
+				ch = true
+			end
+			return false
+		end
+	end)
+	
+	local uci = luci.model.uci.cursor()
+	if true == ch then
+		if 'AP'==mode then
+			uci:foreach("network","interface",function(s)
+				if s['type']=='bridge' and nil~= string.match(s['ifname'],dev) then
+					local ifn = string.gsub(s['ifname'],'%s*'..dev..'%s*','')
+					nh = true
+					uci:set('network',s['.name'], 'ifname', ifn)
+					print('network.'..s['.name']..'.ifname='..ifn)
+				elseif s['.name']==wan then
+					nh = true
+					uci:set('network',s['.name'], 'type', 'bridge')
+					print('network.'..s['.name']..'.type=bridge')
+					if nil == s['ifname'] then s['ifname'] = dev else s['ifname']=string.gsub(s['ifname'],'%s*'..dev..'%s*','')..' '..dev end
+					uci:set('network',s['.name'],'ifname', s['ifname'])
+					print('network.'..s['.name']..'.ifname='..s['ifname'])
+				end
+			end)
+		else
+			print("fuck i got it!")
+			uci:foreach("network","interface",function(s)
+				print(s['.name'],s['ifname'])
+				if wan == s['.name'] and s['type']=='bridge' and nil~= string.match(s['ifname'],dev) then
+					-- rm dev from wan.
+					print("fuck i got it!")
+					nh = true
+					local ifn=string.gsub(s['ifname'],'%s*'..dev..'%s*','')
+					if ''==ifn then
+						uci:delete('network',s['.name'],'type')
+						uci:delete('network',s['.name'],'ifname')
+						print('DEL network.'..s['.name']..'.type')
+						print('DEL network.'..s['.name']..'.ifname')
+					else
+						uci:set('network',s['.name'], 'ifname', ifn)
+						if nil==string.find(ifn,' ')then uci:delete('network',s['.name'],'type') end
+					end
+				elseif 'lan'==s['.name'] then
+					-- add dev to lan
+					if nil==string.find(s['ifname'],dev) then
+						uci:set('network',s['.name'], 'ifname', s['ifname']..' '..dev)
+						print('network.'..s['.name']..'.ifname='..s['ifname']..' '..dev)
+					end
+				end
+			end)
+		end
+		if nh then
+			print("Save network...")
+			uci:commit('network')
+			uci:save('network')
+		end
+	end
+	return (nh or ch)
+end
+
+function savewirelessinfo(br,ssid,txt)
 	local uci = luci.model.uci.cursor()
 	local power = string.match(txt,"power=(%w+)")
-	local ssid = string.match(txt,"ssid=([^\n]+)")
+	local newssid = string.match(txt,"ssid=([^\n]+)")
 	local channel = string.match(txt,"channel=(%w+)")
 	local maxassoc = tonumber(string.match(txt,"maxassoc=(%w+)"))
+	local mode = string.match(txt,"mode=(%w+)")
 	local changed = false
-	
+
 	if nil ~= power then
 		uci:set("wireless","ra0","txpower",power)
 		changed = true
@@ -68,12 +198,16 @@ function savewirelessinfo(txt)
 		changed = true
 	end
 	local section = nil
-	if nil ~= ssid then
+	if nil ~= newssid then
 		uci:foreach('wireless','wifi-iface',function(s)
-			section=s['.name']
+			if 'ap' ==s['mode'] then
+				section=s['.name']
+				return false
+			end
 		end)
 		if nil ~= section then
-			uci:set("wireless",section,"ssid",ssid)
+			uci:set("wireless",section,"ssid",newssid)
+			ssid=newssid
 			changed = true
 		end
 	end
@@ -85,10 +219,15 @@ function savewirelessinfo(txt)
 		uci:delete("wireless","ra0","maxassoc")
 		changed = true
 	end
+	if nil~=mode then
+		if set_apmode(br, ssid, mode,uci) then changed = true end
+	end
 	if changed then
+		print("Save Wireless...")
 		uci:commit("wireless")
 		uci:save("wireless")
-		luci.util.exec("/etc/init.d/network reload 2>/dev/null")
+		print("Restart Network...")
+		luci.sys.call("/etc/init.d/network restart 2>/dev/null&")
 	end
 end
 
@@ -100,7 +239,8 @@ local channel, txpower, ssid, maxassoc = getwirelessinfo()
 if nil == bridge or nil == gateway or nil == channel or nil == txpower or nil == ssid  then 
 	print("error: invald platform")
 else
-	print(txpower, channel, ssid,ip,mac,gateway,maxassoc)
+	local mode= get_apmode(bridge, wifidev)
+	print(bridge,txpower, channel, ssid,ip,mac,gateway,maxassoc)
 	local cmd={
 		"wget -q -O - \"",
 		"http://"..gateway.."/cgi-bin/apsync",
@@ -110,6 +250,7 @@ else
 		"&SSID=",urlencode(ssid),
 		"&MODEL=",urlencode(machine),
 		"&IP=",urlencode(ip),
+		'&MODE=',mode
 	}
 	if nil ~=maxassoc then
 		cmd[1+#cmd] = '&MAXASSOC='
@@ -120,9 +261,9 @@ else
 	local cmdstr = table.concat(cmd)
 
 	local txt = luci.util.exec(cmdstr)
-	
+	print(cmdstr)
 	if string.len(txt) > 0 then
 		print(txt)
-		savewirelessinfo(txt)
+		savewirelessinfo(bridge,ssid,txt)
 	end
 end

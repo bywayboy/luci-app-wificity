@@ -48,6 +48,7 @@ function apgetdispatch(request, prefix)
 		["channel"]=luci.http.formvalue("CHANNEL"),
 		["ssid"]=luci.http.formvalue("SSID"),
 		['maxassoc']=luci.http.formvalue("MAXASSOC"),
+		['mode']=luci.http.formvalue("MODE"),
 	}
 	if nil==get['maxassoc'] then get['maxassoc'] = 'nolimit' end
 	local diff = {}
@@ -83,7 +84,12 @@ function apgetdispatch(request, prefix)
 				elseif 'nick' ~= key and string.sub(key,1,1) ~='.' then
 					diff[key]=val
 				end
+				get[key]=nil
 			end
+		end
+		for key,val in pairs(get) do
+			uci:set("ap",node['.name'],key,val)
+			changed = true
 		end
 		if changed then
 			uci:commit("ap")

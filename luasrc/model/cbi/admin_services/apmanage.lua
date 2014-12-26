@@ -37,6 +37,11 @@ for v=10,100,10 do
 	t:value(v)
 end
 
+t = s:option(ListValue, "mode", translate("Mode"))
+t:value("AP")
+t:value("AC")
+
 t = s:option(Value, "ssid", translate("SSID"))
+
 
 return m
