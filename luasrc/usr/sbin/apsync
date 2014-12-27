@@ -28,7 +28,7 @@ function get_apmode(br,ifname)
 		-- wan is bridge
 		wan = string.sub(br,4)
 		uci:foreach('network','interface',function(s)
-			if wan == s['.name'] and s['type'] == 'bridge' then
+			if wan == s['.name'] and s['type'] == 'bridge' and nil~=s['ifname'] then
 				if nil ~= string.match(s['ifname'],ifname) then
 					result = 'AP'
 					return false -- skip
