@@ -135,9 +135,6 @@ function set_apmode(br, ssid, mode,wuci)
 					nh = true
 					uci:set('network',s['.name'], 'type', 'bridge')
 					print('network.'..s['.name']..'.type=bridge')
-					if nil == s['ifname'] then s['ifname'] = dev else s['ifname']=string.gsub(s['ifname'],'%s*'..dev..'%s*','')..' '..dev end
-					uci:set('network',s['.name'],'ifname', s['ifname'])
-					print('network.'..s['.name']..'.ifname='..s['ifname'])
 				end
 			end)
 		else
