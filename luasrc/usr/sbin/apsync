@@ -126,7 +126,7 @@ function set_apmode(br, ssid, mode,wuci)
 	if true == ch then
 		if 'AP'==mode then
 			uci:foreach("network","interface",function(s)
-				if s['type']=='bridge' and nil~= string.match(s['ifname'],dev) then
+				if s['.name']~=wan and s['type']=='bridge' and nil~= string.match(s['ifname'],dev) then
 					local ifn = string.gsub(s['ifname'],'%s*'..dev..'%s*','')
 					nh = true
 					uci:set('network',s['.name'], 'ifname', ifn)
@@ -141,7 +141,6 @@ function set_apmode(br, ssid, mode,wuci)
 				end
 			end)
 		else
-			print("fuck i got it!")
 			uci:foreach("network","interface",function(s)
 				print(s['.name'],s['ifname'])
 				if wan == s['.name'] and s['type']=='bridge' and nil~= string.match(s['ifname'],dev) then
@@ -157,12 +156,6 @@ function set_apmode(br, ssid, mode,wuci)
 					else
 						uci:set('network',s['.name'], 'ifname', ifn)
 						if nil==string.find(ifn,' ')then uci:delete('network',s['.name'],'type') end
-					end
-				elseif 'lan'==s['.name'] then
-					-- add dev to lan
-					if nil==string.find(s['ifname'],dev) then
-						uci:set('network',s['.name'], 'ifname', s['ifname']..' '..dev)
-						print('network.'..s['.name']..'.ifname='..s['ifname']..' '..dev)
 					end
 				end
 			end)
