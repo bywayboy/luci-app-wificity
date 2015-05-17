@@ -57,8 +57,8 @@ define Package/luci-app-wificity/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi/admin_services
 	$(CP) $(PKG_BUILD_DIR)/luasrc/model/cbi/admin_services/* $(1)/usr/lib/lua/luci/model/cbi/admin_services
 	
-	$(INSTALL_DIR) $(1)/www/cgi-bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/luasrc/www/cgi-bin/* $(1)/www/cgi-bin
+#	$(INSTALL_DIR) $(1)/www/cgi-bin
+#	$(INSTALL_BIN) $(PKG_BUILD_DIR)/luasrc/www/cgi-bin/* $(1)/www/cgi-bin
 	
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/luasrc/usr/sbin/* $(1)/usr/sbin

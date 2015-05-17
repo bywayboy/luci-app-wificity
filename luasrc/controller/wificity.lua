@@ -14,10 +14,8 @@ function index()
 		entry({"admin", "services", "wificity"}, cbi("admin_services/wificity"), _("Wificity Settings")).dependent = true
 		entry({"admin", "services", "whitemac"}, cbi("admin_services/whitemac"),_("White MAC"))
 	end
-	if nixio.fs.access("/etc/config/ap") then
-		entry({"admin", "services", "apmanage"}, cbi("admin_services/apmanage"), _("AP Manager")).dependent = true
-	end
 end
+
 
 function action_wificity_status()
 	local cmd = tostring(luci.http.formvalue("cmd"))
